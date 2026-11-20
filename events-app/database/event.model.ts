@@ -1,4 +1,4 @@
-import { Schema, model, Document, Model, models, Query } from 'mongoose';
+import { Schema, model, Document, Model, models } from 'mongoose';
 
 /**
  * MongooseUpdatePayload represents the structure of MongoDB update operations
@@ -274,30 +274,6 @@ eventSchema.pre('updateOne', function () {
       throw error;
    }
 });
-
-// Pre-findByIdAndUpdate hook for findByIdAndUpdate operations
-eventSchema.pre('findByIdAndUpdate', function () {
-   const updateObj = this.getUpdate();
-
-   if (!updateObj || typeof updateObj !== 'object') {
-      return ;
-   }
-
-   // Handle both direct field updates and $set operator updates
-   const updatePayload = (updateObj as MongooseUpdatePayload).$set || updateObj;
-
-   try {
-      processUpdatePayload(updatePayload as Record<string, unknown>);
-
-      // Apply changes back to the update object
-      if ((updateObj as MongooseUpdatePayload).$set) {
-         (updateObj as MongooseUpdatePayload).$set = updatePayload as Record<string, unknown>;
-      }
-   } catch (error) {
-      throw error;
-   }
-});
-
 
 /* Reuse existing model during Next.js hot-reload to avoid OverwriteModelError
  */

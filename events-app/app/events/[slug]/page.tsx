@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { getEvent, getSimilarEventsBySlug } from '@/lib/actions/event.actions';
 import { cacheLife } from 'next/cache';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 import '../event.css';
 import  BookEvent  from '@/components/BookEvent';
 import { IEvent } from '@/database/event.model';

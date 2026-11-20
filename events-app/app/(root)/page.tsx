@@ -6,8 +6,6 @@ import { IEvent } from '@/database/event.model'
 import { cacheLife } from 'next/cache';
 import { getAllEvents } from '@/lib/actions/event.actions';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
-
 async function EventsList() {
    'use cache';
 

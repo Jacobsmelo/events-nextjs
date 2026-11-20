@@ -1,4 +1,4 @@
-import { Schema, model, Document, Model, Types } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 /**
  * BookingDocument represents a MongoDB document for a Booking
@@ -64,7 +64,7 @@ const bookingSchema = new Schema<IBooking>(
 const Booking = (() => {
    try {
       return model<IBooking>('Booking');
-   } catch (err) {
+   } catch {
       return model<IBooking>('Booking', bookingSchema);
    }
 })();

@@ -51,9 +51,7 @@ export const createBooking = async ({eventId, slug, email, name}: {
       
    } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Error creating booking:', errorMessage);
-      console.error('Error stack:', errorStack);
-      console.error('Booking data:', { eventId, slug, email, name });
+      console.error('Error creating booking:', error);
       return { success: false, error: errorMessage };
    }
 
