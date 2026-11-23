@@ -18,6 +18,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 The public events homepage is in `app/(root)/page.tsx`; dashboard pages are in `app/(dashboard)/`.
 
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and set the MongoDB, Cloudinary, and Auth.js values. Create a GitHub OAuth app with callback URL `http://localhost:3000/api/auth/callback/github`, then set `GITHUB_ID`, `GITHUB_SECRET`, `NEXTAUTH_SECRET`, and `ADMIN_EMAILS` (a comma-separated list of GitHub account email addresses). Set `NEXTAUTH_URL` to the deployed app URL in production. Cloudinary and auth credentials must remain server-only.
+
+Run `npm run seed` to insert the starter events from `lib/constants.ts` into MongoDB. Existing matching events are left unchanged. The admin dashboard at `/dashboard/events` supports event editing and cancellation, and `/dashboard/bookings` lists attendee bookings. Event cards show bookings against capacity; capacity is informational and does not block additional bookings.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

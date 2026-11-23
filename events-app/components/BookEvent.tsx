@@ -1,32 +1,33 @@
 'use client';
 import { useState, FormEvent } from 'react';
 import { createBooking } from '@/lib/actions/bookings.actions';
-import posthog from 'posthog-js';
 
 const BookEvent = ({eventId, slug}: { eventId: string; slug: string; }) => {
    const [email, setEmail] = useState('');
    const [name, setName] = useState('');
    const [submitted, setSubmitted] = useState(false);
+   const [error, setError] = useState('');
 
 
    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      setError('');
       
       // Client-side validation
       if (!email.trim()) {
-         console.error('Email is required');
+         setError('Email is required');
          return;
       }
       if (!name.trim()) {
-         console.error('Name is required');
+         setError('Name is required');
          return;
       }
       if (name.trim().length < 2) {
-         console.error('Name must be at least 2 characters');
+         setError('Name must be at least 2 characters');
          return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-         console.error('Invalid email format');
+         setError('Invalid email format');
          return;
       }
       
@@ -34,23 +35,16 @@ const BookEvent = ({eventId, slug}: { eventId: string; slug: string; }) => {
          const {success, error} = await createBooking({eventId, slug, email: email.trim(), name: name.trim()});
 
          if(success) {
-            // Track booking event with PostHog
-            if (posthog && typeof posthog.capture === 'function') {
-               posthog.capture('booking_submitted', {
-                  eventId,
-                  slug,
-                  email: email.trim()
-               });
-            }
             // Show success message after a delay
             setTimeout(() => {
                setSubmitted(true);
             }, 1000);
          } else {
-            console.error('Booking creation failed:', error);
+            setError(error ?? 'Booking creation failed');
          }
       } catch (error) {
          console.error('Error submitting booking:', error);
+         setError('Booking could not be completed. Please try again.');
       }
    }
 
@@ -73,6 +67,7 @@ const BookEvent = ({eventId, slug}: { eventId: string; slug: string; }) => {
                      placeholder='Enter your email address' />
                </div>
 
+               {error && <p role="alert">{error}</p>}
                <button type="submit" className="button-submit">Submit</button>
             </form>
          )}

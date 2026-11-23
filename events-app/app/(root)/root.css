@@ -82,6 +82,14 @@
             @apply flex flex-row gap-2;
             }
          }
+
+         .booking-count {
+            @apply flex justify-end;
+
+            p {
+               @apply text-xs text-gray-400;
+            }
+         }
       }
    }
 }

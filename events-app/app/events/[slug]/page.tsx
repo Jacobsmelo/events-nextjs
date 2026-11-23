@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from 'react';
 import Image from 'next/image';
 import { getEvent, getSimilarEventsBySlug } from '@/lib/actions/event.actions';
-import { cacheLife } from 'next/cache';
+import { cacheLife, cacheTag } from 'next/cache';
 
 import '../event.css';
 import  BookEvent  from '@/components/BookEvent';
@@ -48,20 +48,30 @@ async function Event({params}: { params: Promise<{ slug: string }>}) {
    'use cache';
 
    cacheLife('minutes');
-   
+   cacheTag('events');
+
    const { slug } = await params;
-   const bookings = 10;
+   const event = await getEvent(slug) as (IEvent & { bookingCount?: number }) | null;
+   if (!event?.description) return notFound();
 
-   
-
-
-   // const request = await fetch(`${BASE_URL}/api/events/${slug}`);
-   // if (!request.ok) {
-   //    throw new Error(`Failed to fetch event: ${request.status}`);
-   // }
-   // const response = await request.json();
-   const { _id, description, image, overview, date, time, location, mode, agenda, audience, organizer, tags } = await getEvent(slug) as IEvent;
-   if (!description) return notFound();
+   const {
+      _id,
+      description,
+      image,
+      overview,
+      date,
+      time,
+      location,
+      mode,
+      agenda,
+      audience,
+      organizer,
+      tags,
+      capacity = 100,
+      bookingCount = 0,
+      status = 'scheduled',
+   } = event;
+   const bookings = bookingCount;
 
    const simEvents: IEvent[] = await getSimilarEventsBySlug(slug);
    
@@ -108,10 +118,12 @@ async function Event({params}: { params: Promise<{ slug: string }>}) {
             <aside className="booking">
                <div className="signup-card">
                   <h2> Book Your Spot Now! </h2>
-                  {bookings > 0 ? ( <p>Join {bookings} others who have already booked thier spot!</p>
-                     ): (<p>Be the first to book your spot!</p>)}
-
-                  <BookEvent eventId={_id.toString()} slug={slug} />
+                  <p>{bookings}/{capacity} booked</p>
+                  {status === 'canceled' ? (
+                     <p role="status">This event has been canceled.</p>
+                  ) : (
+                     <BookEvent eventId={_id.toString()} slug={slug} />
+                  )}
                </div>
             </aside>
          </div>
@@ -120,7 +132,17 @@ async function Event({params}: { params: Promise<{ slug: string }>}) {
             <h2>Similar Events</h2>
             <div className='events'>
                {simEvents.length > 0 ? simEvents.map((simEvent: IEvent) => (
-                  <EventCard key={String(simEvent._id)} title={simEvent.title} image={simEvent.image} slug={simEvent.slug} location={simEvent.location} date={simEvent.date} time={simEvent.time} />
+                  <EventCard
+                     key={String(simEvent._id)}
+                     title={simEvent.title}
+                     image={simEvent.image}
+                     slug={simEvent.slug}
+                     location={simEvent.location}
+                     date={simEvent.date}
+                     time={simEvent.time}
+                     bookingCount={simEvent.bookingCount ?? 0}
+                     capacity={simEvent.capacity ?? 100}
+                  />
                )) : <p>No similar events found.</p> }
             </div>
 

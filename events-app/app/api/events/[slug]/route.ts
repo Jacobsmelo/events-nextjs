@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/lib/mongodb';
 import Event from '@/database/event.model';
 import { IEvent } from '@/database/event.model';
+import { CloudinaryConfigurationError, uploadEventImage } from '@/lib/cloudinary';
+import { EventFormError, getEventImageFile, parseEventFormData } from '@/lib/event-form';
+import { requireAdminApi } from '@/lib/require-admin';
 
 /**
  * API Response Types for type-safety
@@ -17,6 +21,9 @@ interface ErrorResponse {
 }
 
 type ApiResponse = SuccessResponse | ErrorResponse;
+type MutationResponse =
+   | { success: true; message: string; event: IEvent }
+   | ErrorResponse;
 
 /**
  * Validates and sanitizes slug parameter
@@ -163,12 +170,111 @@ export async function PUT(): Promise<NextResponse<ErrorResponse>> {
    );
 }
 
-export async function DELETE(): Promise<NextResponse<ErrorResponse>> {
-   return NextResponse.json(
-      {
-         success: false,
-         error: 'Method not allowed. Use GET to fetch event details.',
-      },
-      { status: 405 }
-   );
+export async function PATCH(
+   request: NextRequest,
+   { params }: { params: Promise<{ slug: string }> }
+): Promise<NextResponse<MutationResponse>> {
+   if (!await requireAdminApi()) {
+      return NextResponse.json({ success: false, error: 'Admin access required.' }, { status: 401 });
+   }
+
+   try {
+      const { slug } = await params;
+      const validatedSlug = validateSlug(decodeURIComponent(slug));
+      if (!validatedSlug) {
+         return NextResponse.json({ success: false, error: 'Invalid event slug.' }, { status: 400 });
+      }
+
+      await connectDB();
+      const formData = await request.formData();
+      const updates = parseEventFormData(formData);
+      const image = getEventImageFile(formData);
+      const imageUrl = image
+         ? await uploadEventImage(Buffer.from(await image.arrayBuffer()))
+         : undefined;
+
+      const event = await Event.findOneAndUpdate(
+         { slug: validatedSlug.toLowerCase() },
+         { $set: { ...updates, ...(imageUrl ? { image: imageUrl } : {}) } },
+         { new: true, runValidators: true }
+      ).lean();
+
+      if (!event) {
+         return NextResponse.json({ success: false, error: 'Event not found.' }, { status: 404 });
+      }
+
+      revalidateTag('events', 'max');
+      return NextResponse.json({
+         success: true,
+         message: 'Event updated.',
+         event: event as IEvent,
+      });
+   } catch (error) {
+      console.error('Error updating event:', error);
+      if (error instanceof EventFormError) {
+         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+      }
+      if (error instanceof CloudinaryConfigurationError) {
+         return NextResponse.json({ success: false, error: error.message }, { status: 503 });
+      }
+      if (error instanceof Error && error.name === 'ValidationError') {
+         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+      }
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
+         return NextResponse.json(
+            { success: false, error: 'An event with that title already exists.' },
+            { status: 409 }
+         );
+      }
+      return NextResponse.json({ success: false, error: 'Event update failed.' }, { status: 500 });
+   }
+}
+
+export async function DELETE(
+   _request: NextRequest,
+   { params }: { params: Promise<{ slug: string }> }
+): Promise<NextResponse<ApiResponse>> {
+   if (!await requireAdminApi()) {
+      return NextResponse.json(
+         { success: false, error: 'Admin access required.' },
+         { status: 401 }
+      );
+   }
+
+   try {
+      const { slug } = await params;
+      const validatedSlug = validateSlug(decodeURIComponent(slug));
+      if (!validatedSlug) {
+         return NextResponse.json(
+            { success: false, error: 'Invalid event slug.' },
+            { status: 400 }
+         );
+      }
+
+      await connectDB();
+      const event = await Event.findOneAndUpdate(
+         { slug: validatedSlug.toLowerCase() },
+         { $set: { status: 'canceled' } },
+         { new: true }
+      );
+
+      if (!event) {
+         return NextResponse.json(
+            { success: false, error: 'Event not found.' },
+            { status: 404 }
+         );
+      }
+
+      revalidateTag('events', 'max');
+      return NextResponse.json(
+         { success: true, data: event as IEvent },
+         { status: 200 }
+      );
+   } catch (error) {
+      console.error('Error canceling event:', error);
+      return NextResponse.json(
+         { success: false, error: 'Event cancellation failed.' },
+         { status: 500 }
+      );
+   }
 }

@@ -4,9 +4,6 @@ import "./globals.css";
 import "./(root)/root.css"
 import LightRays from '../components/LightRays'
 import Navbar from '../components/Navbar'
-import { PostHogPageView } from '../components/PostHogPageView'
-import { PostHogProviderWrapper } from '../components/PostHogProviderWrapper'
-import { Suspense } from 'react'
 
 // Google font configs
 const schibstedGrotesk = Schibsted_Grotesk({
@@ -38,10 +35,6 @@ export default function RootLayout({children,}:
    return (
       <html lang="en" >
          <body className={`${schibstedGrotesk.variable} ${martianMono.variable}`}>
-            <PostHogProviderWrapper>
-               
-            <Suspense fallback={null}><PostHogPageView /></Suspense>
-
             <Navbar />
             
             <div className="rays">
@@ -64,8 +57,6 @@ export default function RootLayout({children,}:
             <main>
                {children}
             </main>
-         
-            </PostHogProviderWrapper>
          
          </body>
 

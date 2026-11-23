@@ -7,10 +7,12 @@ interface Props {
    location: string;
    date: string;
    time: string;
+   bookingCount: number;
+   capacity: number;
 }
 
 
-const EventCard = ({title, image, slug, location, date, time}: Props) => {
+const EventCard = ({title, image, slug, location, date, time, bookingCount, capacity}: Props) => {
    return (
       <Link href={`/events/${slug}`} id="event-card" >
          <Image src={image} alt="EventImg" width={500} height={300} className="poster" loading="eager" />
@@ -33,7 +35,9 @@ const EventCard = ({title, image, slug, location, date, time}: Props) => {
             
             </div>
          </div>
-         
+         <div className="booking-count">
+            <p className="text-right text-xs text-gray-400">{bookingCount}/{capacity} booked</p>
+         </div>
       </Link>
    )
 }

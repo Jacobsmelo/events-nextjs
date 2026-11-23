@@ -2,6 +2,9 @@
 
 import { connectDB } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { updateTag } from 'next/cache';
+import { Booking } from '@/database/booking.model';
+import Event from '@/database/event.model';
 
 export const createBooking = async ({eventId, slug, email, name}: {
       eventId: string; 
@@ -11,7 +14,7 @@ export const createBooking = async ({eventId, slug, email, name}: {
    }) => {
 
    try {
-      const conn = await connectDB();
+      await connectDB();
       
       // Validate inputs
       if (!name || name.trim().length < 2) {
@@ -31,22 +34,26 @@ export const createBooking = async ({eventId, slug, email, name}: {
       } catch {
          throw new Error('Invalid event ID format');
       }
-      
-      // Use MongoDB driver directly (bypass Mongoose)
-      const db = conn.getClient().db(process.env.MONGODB_DB || 'events-nextapp');
-      const bookingsCollection = db.collection('bookings');
-      
-      // Insert booking document directly
-      const result = await bookingsCollection.insertOne({
-         eventId: objectId,
+
+      const event = await Event.findOne({
+         _id: objectId,
          slug: slug.toLowerCase().trim(),
+      });
+      if (!event) {
+         throw new Error('Event not found');
+      }
+      if (event.status === 'canceled') {
+         throw new Error('This event has been canceled');
+      }
+
+      await Booking.create({
+         eventId: objectId,
+         slug: event.slug,
          email: email.toLowerCase().trim(),
          name: name.trim(),
-         createdAt: new Date(),
-         updatedAt: new Date(),
       });
-      
-      console.log('Booking created successfully:', result.insertedId);
+      updateTag('events');
+
       return { success: true };
       
    } catch (error) {

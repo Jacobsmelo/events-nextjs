@@ -2,14 +2,14 @@
 import React, { Suspense } from 'react'
 import ExploreBtn from '@/components/ExploreBtn'
 import EventCard from '@/components/EventCard'
-import { IEvent } from '@/database/event.model'
-import { cacheLife } from 'next/cache';
+import { cacheLife, cacheTag } from 'next/cache';
 import { getAllEvents } from '@/lib/actions/event.actions';
 
 async function EventsList() {
    'use cache';
 
    cacheLife('hours');
+   cacheTag('events');
 
    const events = await getAllEvents();
    // const response = await fetch(`${BASE_URL}/api/events`);
@@ -20,7 +20,7 @@ async function EventsList() {
 
    return (
       <ul className='events'>
-         {events && events.length > 0 && events.map((event: IEvent) => (
+         {events && events.length > 0 && events.map((event) => (
             <li key={event._id as unknown as string}>
                <EventCard {...event} />
             </li>

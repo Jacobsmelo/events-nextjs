@@ -1,9 +1,9 @@
 import mongoose, { Connection } from 'mongoose';
-import dns from 'dns';
+import dns from "node:dns";  
 
 // Type definition for the global cache to store the mongoose connection
 
-dns.setServers(["1.1.1.1", "8.8.8.8"]);
+dns.setServers(["1.1.1.1", "1.0.0.1"]);  
 
 interface MongooseCache {
    conn: Connection | null;
@@ -13,7 +13,7 @@ interface MongooseCache {
 // Declare global type for Node.js to store cached connection
 declare global {
    var mongooseCache: MongooseCache | undefined;
-}
+}  
 
 // Initialize global cache if not already done
 const cached: MongooseCache = global.mongooseCache || { conn: null, promise: null };
@@ -51,8 +51,7 @@ export async function connectDB(): Promise<Connection> {
    }
 
   // Create connection promise
-   cached.promise = mongoose
-      .connect(mongoUri, {
+   cached.promise = mongoose.connect(mongoUri, {
       // Connection options for better stability and performance
       bufferCommands: false,
       maxPoolSize: 10,

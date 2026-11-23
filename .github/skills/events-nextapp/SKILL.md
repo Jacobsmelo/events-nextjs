@@ -11,7 +11,7 @@ Use this skill for implementation and maintenance work in this repository. This 
 
 - `app/` contains the Next.js App Router layouts, pages, and API route handlers. Public event pages are under `(root)` and dashboard pages under `(dashboard)`.
 - `app/api/events/` contains the event collection and slug API handlers.
-- `components/` contains shared UI, booking, and PostHog components.
+- `components/` contains shared UI and booking components.
 - `database/` contains Mongoose models; `lib/mongodb.ts` owns the cached MongoDB connection.
 - `lib/actions/` contains server actions for events and bookings.
 

@@ -22,6 +22,9 @@ interface MongooseUpdatePayload {
    location: string;
    date: string; // ISO format (YYYY-MM-DD)
    time: string; // HH:mm format (e.g., 09:00, 14:30)
+   capacity: number;
+   status: 'scheduled' | 'canceled';
+   bookingCount?: number;
    mode: 'online' | 'offline' | 'hybrid';
    audience: string;
    agenda: string[];
@@ -159,6 +162,18 @@ const eventSchema = new Schema<IEvent>(
       time: {
          type: String,
          required: [true, 'Event time is required'],
+      },
+      capacity: {
+         type: Number,
+         required: [true, 'Event capacity is required'],
+         min: [1, 'Event capacity must be at least 1'],
+         default: 100,
+      },
+      status: {
+         type: String,
+         enum: ['scheduled', 'canceled'],
+         required: true,
+         default: 'scheduled',
       },
       mode: {
          type: String,
